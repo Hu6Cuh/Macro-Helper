@@ -8,6 +8,9 @@ from flask import Flask
 # Load environment variables
 load_dotenv()
 
+# Disable voice features to avoid audioop issues
+discord.opus._load_default = lambda: None
+
 # Create Flask app for Render health checks
 app = Flask(__name__)
 
