@@ -2,25 +2,15 @@ import discord
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
-import threading
-from flask import Flask
 
 # Load environment variables
 load_dotenv()
 
 # Disable voice features to avoid audioop issues
-discord.opus._load_default = lambda: None
-
-# Create Flask app for Render health checks
-app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return "Discord Bot is running!"
-
-@app.route('/health')
-def health():
-    return "OK"
+try:
+    discord.opus._load_default = lambda: None
+except:
+    pass
 
 # Bot setup
 intents = discord.Intents.default()
@@ -28,7 +18,7 @@ intents.message_content = True
 intents.reactions = True
 intents.members = True
 
-bot = commands.Bot(command_prefix='!!', intents=intents)
+bot = commands.Bot(command_prefix='!!', intents=intents, help_command=None)
 
 # Configuration
 MACRO_KEYWORDS = ['help', 'macro', 'issue', 'problem', 'bug', 'error']
@@ -193,12 +183,17 @@ async def verify_error(ctx, error):
         await ctx.send("❌ You need administrator permissions to use this command!", delete_after=10)
 
 # Additional utility commands
-@bot.command(name='help')
-async def help_command(ctx):
+@bot.command(name='bothelp')
+async def bot_help_command(ctx):
     """Show bot help"""
     embed = discord.Embed(
         title="🤖 Bot Commands",
         color=0x0099ff
+    )
+    embed.add_field(
+        name="Bot Commands",
+        value="`!!bothelp` - Show this help message\n`!!ping` - Check bot latency",
+        inline=False
     )
     embed.add_field(
         name="Admin Commands",
@@ -238,16 +233,6 @@ if __name__ == "__main__":
     TOKEN = os.getenv('DISCORD_BOT_TOKEN')
     if not TOKEN:
         print("Error: DISCORD_BOT_TOKEN not found in environment variables!")
-        print("Make sure to set your bot token in the .env file")
+        print("Make sure to set your bot token in the environment variables")
     else:
-        # Start Flask server in a separate thread
-        def run_flask():
-            port = int(os.environ.get('PORT', 10000))
-            app.run(host='0.0.0.0', port=port)
-        
-        flask_thread = threading.Thread(target=run_flask)
-        flask_thread.daemon = True
-        flask_thread.start()
-        
-        # Run the Discord bot
         bot.run(TOKEN)
